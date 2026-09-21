@@ -102,7 +102,7 @@ function outboundFuelPlan(route: RouteOption, l100: number): FuelPlan {
 
   if (lastFill > 0.2) {
     stops.push({
-      place: "Северная Италия, Больцано или Верона",
+      place: "Италия, Гарда / Верона",
       country: "IT",
       liters: lastFill,
       price: expensivePrice,
@@ -256,9 +256,13 @@ export function hotelTotal(opts?: {
     }
     if (!includeTransit) return s;
     const isOut =
-      n.place.includes("11.10") || n.place.includes("Инсбрук");
+      n.place.includes("11.10") ||
+      n.place.includes("Краков") ||
+      n.place.includes("Грац");
     const isBack =
-      n.place.includes("Мюнхен") || n.place.includes("23.10");
+      n.place.includes("Регенсбург") ||
+      n.place.includes("Вроцлав") ||
+      n.place.includes("23.10");
     if (phase === "out" && !isOut) return s;
     if (phase === "back" && !isBack) return s;
     return s + n.amount;

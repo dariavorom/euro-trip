@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import {
+  Flame,
   Fuel,
   UtensilsCrossed,
   Ticket,
@@ -38,13 +39,17 @@ import {
 import {
   EUR_TO_BYN,
   PRICES_AS_OF,
+  BUDGET_CAP_EUR,
+  ADULTS,
   calendar,
   dieselPrices,
   documents,
   foodProfiles,
+  foodKit,
   hotelNights,
   lodgingPlan,
   outlets,
+  MAX_DRIVE_KM,
   roundTrip,
   routes,
   speedLimits,
@@ -133,7 +138,9 @@ export function TripPlanner() {
 
   const visibleLodging = useMemo(() => {
     if (mode === "alps")
-      return lodgingPlan.filter((n) => n.phase === "out" || n.phase === "italy");
+      return lodgingPlan.filter(
+        (n) => n.phase === "out" || n.phase === "garda" || n.phase === "italy",
+      );
     if (mode === "germany")
       return lodgingPlan.filter((n) => n.phase === "back");
     return lodgingPlan;
@@ -158,9 +165,17 @@ export function TripPlanner() {
     if (h.kind === "italy") return italyHotels && mode !== "germany";
     if (!transitHotels) return false;
     if (mode === "alps")
-      return h.place.includes("11.10") || h.place.includes("Инсбрук");
+      return (
+        h.place.includes("11.10") ||
+        h.place.includes("Краков") ||
+        h.place.includes("Грац")
+      );
     if (mode === "germany")
-      return h.place.includes("Мюнхен") || h.place.includes("23.10");
+      return (
+        h.place.includes("Регенсбург") ||
+        h.place.includes("Вроцлав") ||
+        h.place.includes("23.10")
+      );
     return true;
   });
 
@@ -182,7 +197,9 @@ export function TripPlanner() {
             <p className="text-xs tracking-[0.28em] uppercase">
               14 дней · {tripDates.visaLabel}
             </p>
-            <p className="hidden text-sm sm:block">Два взрослых · один Tiguan</p>
+            <p className="hidden text-sm sm:block">
+              {ADULTS} взрослых · один Tiguan · до {eur(BUDGET_CAP_EUR)}
+            </p>
           </div>
           <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
             <div className="space-y-5 text-white">
@@ -190,12 +207,12 @@ export function TripPlanner() {
                 Гомель ↔ Комо · {tripDates.startLabel} – {tripDates.endLabel}
               </p>
               <h1 className="font-heading text-4xl leading-[1.05] font-semibold tracking-tight sm:text-6xl">
-                Больше Италии, транзит без лишних ночёвок
+                Гарда, Верона, Милан и Комо — без гонки
               </h1>
               <p className="max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
-                9 ночей у озера с {tripDates.italyFrom}. Чехия — только транзит.
-                По пути — крупные аутлеты: Варшава, Freeport, Serravalle,
-                Ingolstadt, Вроцлав.
+                Не больше {MAX_DRIVE_KM} км в день. Ночёвки в Кракове, Граце,
+                Регенсбурге и Вроцлаве. 2 ночи на юге Гарды и 5 у Канту. Верона
+                с базы, Милан поездом. Два аутлета: Freeport и Serravalle.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
@@ -217,7 +234,7 @@ export function TripPlanner() {
               <HeroStat
                 icon={<ShoppingBag className="size-4" />}
                 label="Аутлеты"
-                value={`${outlets.length}`}
+                value="2"
               />
             </div>
           </div>
@@ -272,7 +289,8 @@ export function TripPlanner() {
             <CardHeader>
               <CardTitle className="font-heading text-2xl">Как считаем</CardTitle>
               <CardDescription>
-                Дизель на {PRICES_AS_OF}. Жильё в Италии и транзит — отдельно.
+                Дизель на {PRICES_AS_OF}. Еда по умолчанию — горелка и кафе по
+                пути. Жильё в Италии и транзит — отдельно.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -289,13 +307,13 @@ export function TripPlanner() {
                     active={mode === "alps"}
                     onClick={() => setMode("alps")}
                     title="Туда + озеро"
-                    text="До выезда 22.10"
+                    text="До выезда 21.10"
                   />
                   <Choice
                     active={mode === "germany"}
                     onClick={() => setMode("germany")}
                     title="Только обратно"
-                    text="22–24 октября"
+                    text="21–24 октября"
                   />
                 </div>
               </div>
@@ -355,13 +373,20 @@ export function TripPlanner() {
                   Дорога ~{eur(foodProfile.roadPerDay)}/день · озеро ~
                   {eur(foodProfile.italyPerDay)}/день
                 </p>
+                <p className="flex items-start gap-2 rounded-lg bg-muted p-2.5 text-xs text-muted-foreground">
+                  <Flame className="mt-0.5 size-3.5 shrink-0" />
+                  <span>
+                    {foodKit.note}{" "}
+                    {foodKit.shops.map((s) => `${s.where}: ${s.name}`).join(" · ")}
+                  </span>
+                </p>
               </div>
 
               <div className="space-y-2">
                 <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
                   <span className="flex items-center gap-2">
                     <BedDouble className="size-4" />
-                    4 транзитные ночи
+                    {roundTrip.transitHotelNights} транзитных ночей
                   </span>
                   <input
                     type="checkbox"
@@ -374,7 +399,7 @@ export function TripPlanner() {
                   <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
                     <span className="flex items-center gap-2">
                       <BedDouble className="size-4" />
-                      9 ночей у Комо (~€110)
+                      {tripDates.gardaNights} ночи Гарда + {tripDates.lakeNights} Канту
                     </span>
                     <input
                       type="checkbox"
@@ -408,6 +433,18 @@ export function TripPlanner() {
                 </p>
                 <p className="mt-1 text-sm text-primary-foreground/70">
                   ≈ {byn(totals.grand)} · {eur(totals.perPerson)} на человека
+                </p>
+                <p
+                  className={`mt-2 text-sm ${
+                    totals.grand <= BUDGET_CAP_EUR
+                      ? "text-primary-foreground/80"
+                      : "text-amber-200"
+                  }`}
+                >
+                  Потолок {eur(BUDGET_CAP_EUR)} на двоих
+                  {totals.grand <= BUDGET_CAP_EUR
+                    ? ` · запас ${eur(BUDGET_CAP_EUR - totals.grand)}`
+                    : ` · сверх на ${eur(totals.grand - BUDGET_CAP_EUR)}`}
                 </p>
               </div>
               <div className="space-y-3 text-sm">
@@ -457,9 +494,9 @@ export function TripPlanner() {
           />
           <MiniStat
             icon={<Gauge className="size-4" />}
-            title="Транзит без ночи"
-            value="Чехия"
-            hint="Австрия — только Инсбрук на одну ночь"
+            title="Лимит дня"
+            value={`${MAX_DRIVE_KM} км`}
+            hint="Чехия без ночёвки · Краков, Грац, Регенсбург, Вроцлав"
           />
         </section>
 
@@ -468,8 +505,8 @@ export function TripPlanner() {
             <div>
               <h2 className="font-heading text-3xl">Календарь поездки</h2>
               <p className="mt-1 text-muted-foreground">
-                {tripDates.startLabel} – {tripDates.endLabel}. Максимум дней в
-                Италии, дорога сжата.
+                {tripDates.startLabel} – {tripDates.endLabel}. Не больше{" "}
+                {MAX_DRIVE_KM} км в день, ночёвки в красивых городах.
               </p>
             </div>
             <Badge variant="outline">{visibleDays.length} дней</Badge>
@@ -548,12 +585,18 @@ export function TripPlanner() {
                   Крупные аутлеты по пути
                 </CardTitle>
                 <CardDescription>
-                  Встроены в дни дороги или как выезды с базы Комо. Бюджет шопинга
-                  в смету не входит — только время и крюк в минутах.
+                  Только два: самый большой и самый выгодный с широким выбором.
+                  Шопинг в смету не входит.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {visibleOutlets.map((o) => (
+                {visibleOutlets.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    На обратном пути аутлетов нет: шопинг уже Freeport и
+                    Serravalle.
+                  </p>
+                ) : (
+                  visibleOutlets.map((o) => (
                   <div
                     key={o.id}
                     className="grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_auto]"
@@ -562,6 +605,11 @@ export function TripPlanner() {
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-heading text-xl">{o.name}</p>
                         <Badge variant="outline">{o.country}</Badge>
+                        <Badge>
+                          {o.pick === "biggest"
+                            ? "Самый большой"
+                            : "Дешевле и шире выбор"}
+                        </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {o.brand} · {o.near} · {o.when}
@@ -586,7 +634,7 @@ export function TripPlanner() {
                       </a>
                     ) : null}
                   </div>
-                ))}
+                )))}
               </CardContent>
             </Card>
           </TabsContent>
@@ -664,8 +712,8 @@ export function TripPlanner() {
               <CardHeader>
                 <CardTitle className="font-heading text-2xl">Где ночевать</CardTitle>
                 <CardDescription>
-                  Транзит сжат: Белосток → Инсбрук → 9 ночей Комо → Мюнхен →
-                  Белосток.
+                  Белосток → Краков → Грац → 2 ночи Гарда → 5 ночей Канту →
+                  Регенсбург → Вроцлав → Белосток. Номера на двоих.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -753,7 +801,7 @@ export function TripPlanner() {
             <CardHeader>
               <CardTitle className="font-heading text-2xl">Жильё в смете</CardTitle>
               <CardDescription>
-                Комо в смете как €110 × 9. Аутлет-шопинг не включён.
+                Гарда €75 × 2 и Канту €70 × 5 на двоих. Аутлет-шопинг не включён.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -780,16 +828,18 @@ export function TripPlanner() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
               <p>
-                Чехия — виньетка и Freeport, ночёвки нет. Австрия — одна ночь в
-                Инсбруке: иначе день 2 превращается в 14–15 часов с аутлетами.
+                Чехия — виньетка и Freeport, ночёвки нет. Австрия — ночь в Граце:
+                Шлоссберг вечером, утром Тарвизио к Гарде без Бреннера. Верона и
+                Сирмионе с одной базы на юге озера.
               </p>
               <p>
-                С 13 по утро 22 октября вы в Италии. Serravalle и Franciacorta —
-                отдельные дни с базы, не из транзитa.
+                На Комо переезжаем 16-го, короткие 2 часа по A4. Милан — поездом
+                в субботу, Serravalle — в понедельник. Тре Чиме не берём: крюк
+                на восток съел бы Верону или Комо.
               </p>
               <p>
-                Обратно Германия: другой пейзаж, Ingolstadt Village и Вроцлав,
-                финиш 24 октября в рамке визы.
+                Обратно через Регенсбург и Вроцлав, без марафона и без лишних
+                аутлетов. Финиш 24 октября в рамке визы.
               </p>
             </CardContent>
           </Card>
@@ -802,12 +852,12 @@ export function TripPlanner() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
               <p>
-                Долгая очередь на Брузгах 11.10 съест запас дня 2. Тогда
-                сократите Warsaw до 30 минут и пропустите Parndorf.
+                Долгая очередь на Брузгах 11.10 съест вечер в Белостоке, не
+                Краков: лимит {MAX_DRIVE_KM} км. Freeport всё равно день 3.
               </p>
               <p>
-                День 13 (Мюнхен → Белосток) самый тяжёлый. Если устали —
-                ночуйте во Вроцлаве и режьте шопинг.
+                Самые длинные дни — 680 км на границе. Обратно Регенсбург и
+                Вроцлав держат каждый перегон в лимите, без 1080 км за рулём.
               </p>
               <p>
                 24.10 — последний день визы: без «ещё одного кафе» у границы.
@@ -819,10 +869,11 @@ export function TripPlanner() {
         <footer className="border-t pt-6 pb-12 text-sm text-muted-foreground">
           <p>
             Смета на двоих, {vehicle.make} {vehicle.engineCode}. Календарь{" "}
-            {tripDates.startLabel}–{tripDates.endLabel}: туда через Австрию с
-            транзитом Чехии, 9 ночей Комо, обратно через Германию. Аутлеты —
-            ориентир по времени, не по чеку. Топливо и виньетки на{" "}
-            {PRICES_AS_OF}.
+            {tripDates.startLabel}–{tripDates.endLabel}: не больше{" "}
+            {MAX_DRIVE_KM} км в день, 2 ночи Гарда и 5 Канту, обратно через
+            Регенсбург и Вроцлав. Еда — {foodKit.burner}, {foodKit.fridge} и
+            кафе по пути. Два аутлета: Freeport и Serravalle. Топливо и
+            виньетки на {PRICES_AS_OF}.
           </p>
         </footer>
       </main>

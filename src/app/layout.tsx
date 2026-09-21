@@ -16,7 +16,7 @@ const display = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "Гомель ↔ Комо · 14 дней | виза с 11 октября",
   description:
-    "Круг на Tiguan Allspace: 9 ночей в Италии, транзит через Чехию без ночёвки, аутлеты Serravalle, Freeport, Ingolstadt. 11–24 октября 2026.",
+    "Круг на Tiguan: не больше 700 км в день. Краков, Грац, Гарда, Верона, Милан, Комо, Регенсбург, Вроцлав. Бюджет на двоих до €3000. 11–24 октября 2026.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
